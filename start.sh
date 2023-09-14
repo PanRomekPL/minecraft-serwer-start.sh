@@ -73,8 +73,10 @@ SCREEN_PATH="/usr/bin/screen"
 SLEEP_PATH="/usr/bin/sleep"
 # Lokalizacja Treey (sprawdź poprawną ścieżkę do interpretera Tree na swoim systemie)
 TREE_PATH="/usr/bin/tree"
-# Lokalizacja sudo (sprawdź poprawną ścieżkę do interpretera sudo na swoim systemie)
+# Lokalizacja Sudo (sprawdź poprawną ścieżkę do interpretera sudo na swoim systemie)
 SUDO_PATH="/usr/bin/sudo"
+# Lokalizacja Wget (sprawdź poprawną ścieżkę do interpretera wugeta na swoim systemie)
+WGET_PATH="/usr/bin/wget"
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -162,6 +164,8 @@ check_programs() {
     check_program_existence "$TREE_PATH"
     echo
     check_program_existence "$SUDO_PATH"
+    echo
+    check_program_existence "$WGET_PATH"
     echo
 }
 
@@ -663,16 +667,16 @@ check_update_script() {
                     "y"|"yes"|"t"|"tak")
                         echo Tworzenie kopii zapasowej skryptu startowego serwera Minecraft.
                         mkdir -p $SERVER_DIR/script_backup
-                        cp -r $SERVER_DIR/startv4.5.sh $SERVER_DIR/script_backup/
+                        cp -r $SERVER_DIR/*.sh $SERVER_DIR/script_backup/
                         echo " "
                         echo "Najnowsza wersja zostanie pobrana."
                         echo "Następnie należy uruchomić skrypt ponownie."
                         echo -e "${BBlack}"
                         sleep 2
 
-                        latest_release=$(wget -qO- https://api.github.com/repos/PanRomekPL/minecraft-serwer-start.sh/releases/latest)
+                        latest_release=$($WGET_PATH -qO- https://api.github.com/repos/PanRomekPL/minecraft-serwer-start.sh/releases/latest)
                         download_link=$(echo "$latest_release" | grep browser_download_url | grep start.sh | cut -d '"' -f 4)
-                        wget "$download_link" -O start.sh
+                        $WGET_PATH "$download_link" -O start.sh
 
                         echo "${BWhite}Aktualizacja skryptu została zakończona z sukcesem${NC}"
                         exit 0

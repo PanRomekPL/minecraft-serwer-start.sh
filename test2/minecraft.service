@@ -1,0 +1,74 @@
+[Unit]
+# Sekcja zawierająca ogólne informacje o jednostce (usłudze). Może zawierać opis jednostki (Description) oraz zależności (After) wobec innych jednostek.
+
+Description=Minecraft Server Management Script
+#Wants=network.target
+After=network.target
+
+
+[Service]
+# Rozwiązuje problem, w którym serwer Minecraft będzie nieustannie restartować się samodzielnie.
+# Zobacz https://askubuntu.com/questions/953920/systemctl-service-timed-out-during-start, aby uzyskać więcej informacji.
+
+# Określa typ usługi. W przypadku "simple" oznacza to, że proces usługi jest bezpośrednio kontrolowany przez systemd.
+#Type=simple
+Type=forking
+
+# Baza danych użytkowników nie jest dostępna z poziomu jednostki (unit), dostępni są tylko root i minecraft, wszyscy inni to "nobody".
+PrivateUsers=true
+
+
+
+# Użytkownik, na którego konto ma być uruchomiona usługa.
+User=root
+# Grupa, do której ma należeć proces usługi.
+Group=mygroup
+
+
+
+# Tylko odczyt chronionych podkatalogów /usr, /boot i /etc
+ProtectSystem=full
+
+# /home, /root i /run/user wydają się być puste z poziomu jednostki. Zaleca się włączenie tej opcji dla wszystkich długotrwałych usług (szczególnie tych narażonych na sieć).
+ProtectHome=true
+
+# /proc/sys, /sys, /proc/sysrq-trigger, /proc/latency_stats, /proc/acpi, /proc/timer_stats, /proc/fs i /proc/irq będą tylko do odczytu wewnątrz jednostki. Zaleca się włączenie tego dla większości usług.
+# Implikuje MountFlags=slave
+ProtectKernelTunables=true
+
+# Blokuje wywołania systemowe dla modułów, także /usr/lib/modules. Zaleca się włączenie tego dla większości usług, które nie potrzebują specjalnych systemów plików lub dodatkowych modułów jądra do działania.
+# Implikuje NoNewPrivileges=yes
+ProtectKernelModules=true
+
+# Zaleca się włączenie tego dla większości usług.
+# Implikuje MountAPIVFS=yes
+ProtectControlGroups=true
+
+# Katalog roboczy, w którym ma być uruchomiona usługa.
+WorkingDirectory=/home/romek/mc
+
+# Ścieżka do pliku lub polecenia, które uruchamia usługę. Może zawierać argumenty i wartości parametrów.
+ExecStart=/home/romek/mc/startv4.5.sh start
+ExecReload=
+ExecStop=/home/romek/mc/startv4.5.sh stop
+
+SyslogIdentifier=minecraft_server
+StandardError=append:/var/log/minecraft_server_error.log
+StandardOutput=append:/var/log/minecraft_server.log
+
+# Zmienne środowiskowe, które mają być ustawione dla procesu usługi. Może być używane wielokrotnie, aby zdefiniować więcej zmiennych.
+#Environment=VAR1=value1
+#Environment=VAR2=value2
+
+# Określa, czy usługa powinna być restartowana po awarii. "always" oznacza restart zawsze, "on-failure" tylko w przypadku błędu.
+Restart=always
+# Czas, jaki systemd czeka przed ponownym uruchomieniem usługi po jej zakończeniu.
+RestartSec=10s
+
+
+
+ # Sekcja określająca zależności i punkt instalacji usługi.
+[Install]
+# Określa docelową jednostkę, do której ma być dołączona ta usługa. "default.target" oznacza uruchomienie usługi podczas startu systemu.
+WantedBy=default.target
+

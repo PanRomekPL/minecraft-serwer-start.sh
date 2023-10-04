@@ -1,29 +1,11 @@
 #!/bin/bash
 
-source version.txt
+source moduły/version.txt
 source moduły/data.sh
 source moduły/config.sh
 source moduły/colors.sh
+source moduły/apps.sh
 source moduły/test.sh
-
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-#romek@DESKTOP-ROMEK:~/mc$ command -v tree 
-#/usr/bin/tree
-
-# Lokalizacja Javy (sprawdź poprawną ścieżkę do interpretera Java na swoim systemie)
-JAVA_PATH="/usr/bin/java"
-# Lokalizacja screena (sprawdź poprawną ścieżkę do interpretera Screen na swoim systemie)
-SCREEN_PATH="/usr/bin/screen"
-# Lokalizacja sleepa (sprawdź poprawną ścieżkę do interpretera Sleep na swoim systemie)
-SLEEP_PATH="/usr/bin/sleep"
-# Lokalizacja Treey (sprawdź poprawną ścieżkę do interpretera Tree na swoim systemie)
-TREE_PATH="/usr/bin/tree"
-# Lokalizacja Sudo (sprawdź poprawną ścieżkę do interpretera sudo na swoim systemie)
-SUDO_PATH="/usr/bin/sudo"
-# Lokalizacja Wget (sprawdź poprawną ścieżkę do interpretera wugeta na swoim systemie)
-WGET_PATH="/usr/bin/wget"
-#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 # ██████ ██   ██ ███████  ██████ ██   ██     ██     ██       ██████   ██████  ██ 
 #██      ██   ██ ██      ██      ██  ██      ██     ██      ██    ██ ██       ██ 
@@ -132,6 +114,7 @@ monitor_logs() {
       log "$SERVER_JAR nie jest uruchomiony."
       echo ------------------------------------------------------------------------
    fi
+echo -e ${BWhite}Aktualna wersja skryptu: $SCRIPT_VERSION${NC}
 }
 
 
@@ -139,12 +122,60 @@ check_ram(){
     echo "Konfiguracja limitów pamięci:"
         log "Konfiguracja limitów pamięci:"
     echo
-    echo -e "  ${Blue}Minimalny rozmiar pamięci serwera (Xms): ${On_IBlue}$MIN_MEMORY${NC}."
+    echo -e "  ${Blue}Minimalny rozmiar pamięci serwera (Xms): ${UBlue}$MIN_MEMORY${NC}."
         log  "Minimalny rozmiar pamięci serwera (Xms): $MIN_MEMORY."
-    echo -e "  ${Green}Maksymalny rozmiar pamięci (Xmx): ${On_IGreen}$MAX_MEMORY${NC}."
+    echo -e "  ${Green}Maksymalny rozmiar pamięci (Xmx): ${UGreen}$MAX_MEMORY${NC}."
         log "Maksymalny rozmiar pamięci (Xmx): $MAX_MEMORY."
     echo ------------------------------------------------------------------------
 
+}
+
+check_colors(){
+    # Testuj kolory
+echo "
+Sprawdzanie kolorów"
+    log "Sprawdzanie kolorów"
+echo -e "Brak koloru ${NC} Tekst przywrócony do domyślnego koloru."
+echo -e "${RED}Czerwony tekst.${NC}"
+echo -e "${LightRed}Jasnoczerwony tekst.${NC}"
+echo -e "${Yellow}Żółty tekst.${NC}"
+echo -e "${Green}Zielony tekst.${NC}"
+echo -e "${Blue}Niebieski tekst.${NC}"
+echo -e "${Purple}Fioletowy tekst.${NC}"
+echo -e "${Cyan}Cyjan tekst.${NC}"
+echo -e "${White}Biały tekst.${NC}"
+echo -e "${BBlack}Czarny tekst (Pogrubiony).${NC}"
+echo -e "${BWhite}Biały tekst (Pogrubiony).${NC}"
+echo -e "${BIRed}Czerwony tekst (Pogrubiony).${NC}"
+echo -e "${BIGreen}Zielony tekst (Pogrubiony).${NC}"
+echo -e "${BIYellow}Żółty tekst (Pogrubiony).${NC}"
+echo -e "${BIBlue}Niebieski tekst (Pogrubiony).${NC}"
+echo -e "${BIPurple}Fioletowy tekst (Pogrubiony).${NC}"
+echo -e "${BICyan}Cyjan tekst (Pogrubiony).${NC}"
+echo -e "${On_IBlack}Czarny tekst na tle o wysokiej intensywności.${NC}"
+echo -e "${On_IRed}Czerwony tekst na tle o wysokiej intensywności.${NC}"
+echo -e "${On_IGreen}Zielony tekst na tle o wysokiej intensywności.${NC}"
+echo -e "${On_IYellow}Żółty tekst na tle o wysokiej intensywności.${NC}"
+echo -e "${On_IBlue}Niebieski tekst na tle o wysokiej intensywności.${NC}"
+echo -e "${On_IPurple}Fioletowy tekst na tle o wysokiej intensywności.${NC}"
+echo -e "${On_ICyan}Cyjan tekst na tle o wysokiej intensywności.${NC}"
+echo -e "${On_IWhite}Biały tekst na tle o wysokiej intensywności.${NC}"
+echo -e "${UBlack}Podkreślony czarny tekst.${NC}"
+echo -e "${URed}Podkreślony czerwony tekst.${NC}"
+echo -e "${UGreen}Podkreślony zielony tekst.${NC}"
+echo -e "${UYellow}Podkreślony żółty tekst.${NC}"
+echo -e "${UBlue}Podkreślony niebieski tekst.${NC}"
+echo -e "${UPurple}Podkreślony fioletowy tekst.${NC}"
+echo -e "${UCyan}Podkreślony cyjan tekst.${NC}"
+echo -e "${UWhite}Podkreślony biały tekst.${NC}"
+echo -e "${IBlack}Tekst o wysokiej intensywności czarny.${NC}"
+echo -e "${IRed}Tekst o wysokiej intensywności czerwony.${NC}"
+echo -e "${IGreen}Tekst o wysokiej intensywności zielony.${NC}"
+echo -e "${IYellow}Tekst o wysokiej intensywności żółty.${NC}"
+echo -e "${IBlue}Tekst o wysokiej intensywności niebieski.${NC}"
+echo -e "${IPurple}Tekst o wysokiej intensywności fioletowy.${NC}"
+echo -e "${ICyan}Tekst o wysokiej intensywności cyjan.${NC}"
+echo -e "${IWhite}Tekst o wysokiej intensywności biały.${NC}"
 }
 
 check_eula() {
@@ -406,7 +437,7 @@ start_default_server() {
 
 
             cd "$SERVER_DIR"
-            $SCREEN_PATH -S minecraft -d -m $JAVA_PATH $JVM_OPTIONS -jar $SERVER_JAR nogui
+            $SCREEN_PATH -S $SCREEN_SESSION_NAME -d -m $JAVA_PATH $JVM_OPTIONS -jar $SERVER_JAR nogui
 
 
     # Sprawdź, czy proces uruchamiania serwera faktycznie wystartował
@@ -434,7 +465,7 @@ start_server() {
 
 
             cd "$SERVER_DIR"
-            $SCREEN_PATH -dmS minecraft -d -m $JAVA_PATH $JVM_OPTIONS -jar $SERVER_JAR nogui 2>&1 | tee -a "$LOG_FILE"
+            $SCREEN_PATH -dmS $SCREEN_SESSION_NAME -d -m $JAVA_PATH $JVM_OPTIONS -jar $SERVER_JAR nogui 2>&1 | tee -a "$LOG_FILE"
 
 
     # Sprawdź, czy proces uruchamiania serwera faktycznie wystartował
@@ -453,16 +484,16 @@ stop_server() {
         log "Rozpoczęto zatrzymanie serwera Minecraft."
 
             # Sprawdź, czy sesja screena istnieje, a serwer działa
-            if screen -list | grep -q "minecraft"; then
+            if screen -list | grep -q "$SCREEN_SESSION_NAME"; then
 
-            $SCREEN_PATH -rd minecraft -p 0 -X stuff "say SERWER ZOSTANIE WYŁĄCZONY ZA 10 SEKUND."'\\15'
+            $SCREEN_PATH -rd $SCREEN_SESSION_NAME -p 0 -X stuff "say SERWER ZOSTANIE WYŁĄCZONY ZA 10 SEKUND."'\\15'
             $SLEEP_PATH 10
-            $SCREEN_PATH -rd minecraft -p 0 -X stuff "say Zapisywanie mapy...."\\15
+            $SCREEN_PATH -rd $SCREEN_SESSION_NAME -p 0 -X stuff "say Zapisywanie mapy...."\\15
 
         echo "Rozpoczęto Zapisywanie mapy."    
         log "Rozpoczęto Zapisywanie mapy."
 
-            $SCREEN_PATH -rd minecraft -p 0 -X stuff "save-all^M"\\15
+            $SCREEN_PATH -rd $SCREEN_SESSION_NAME -p 0 -X stuff "save-all^M"\\15
 
         echo "Zakończono Zapisywanie mapy."
         log "Zakończono Zapisywanie mapy."
@@ -472,7 +503,7 @@ stop_server() {
         echo "Rozpoczęto zatrzymanie serwera Minecraft."
         log "Rozpoczęto zatrzymanie serwera Minecraft."
 
-            $SCREEN_PATH -rd minecraft -p 0 -X stuff "stop^M"\\15
+            $SCREEN_PATH -rd $SCREEN_SESSION_NAME -p 0 -X stuff "stop^M"\\15
             $SLEEP_PATH 10
 
         echo "Zakończono zatrzymanie serwera Minecraft."
@@ -486,14 +517,14 @@ stop_server() {
 
 # Funkcja restartująca serwer Minecraft
 restart_server() {
-            $SCREEN_PATH -rd minecraft -X stuff "say SERWER ZOSTANIE ZRESETOWANY ZA x SEKUND."\\15
+            $SCREEN_PATH -rd $SCREEN_SESSION_NAME -X stuff "say SERWER ZOSTANIE ZRESETOWANY ZA x SEKUND."\\15
             $SLEEP_PATH 10
-            $SCREEN_PATH -rd minecraft -X stuff "say Zapisywanie mapy...."\\15
+            $SCREEN_PATH -rd $SCREEN_SESSION_NAME -X stuff "say Zapisywanie mapy...."\\15
 
         echo "Rozpoczęto Zapisywanie mapy."    
         log "Rozpoczęto Zapisywanie mapy."
 
-            $SCREEN_PATH -rd minecraft -X stuff "save-all^M"\\15
+            $SCREEN_PATH -rd $SCREEN_SESSION_NAME -X stuff "save-all^M"\\15
 
         echo "Zakończono Zapisywanie mapy."
         log "Zakończono Zapisywanie mapy."
@@ -503,7 +534,7 @@ restart_server() {
         echo "Rozpoczęto zatrzymanie serwera Minecraft."
         log "Rozpoczęto zatrzymanie serwera Minecraft."
 
-            $SCREEN_PATH -rd minecraft -X stuff "stop^M"\\15
+            $SCREEN_PATH -rd $SCREEN_SESSION_NAME -X stuff "stop^M"\\15
 
         echo "Zakończono zatrzymanie serwera Minecraft."
         log "Zakończono zatrzymanie serwera Minecraft."
@@ -527,7 +558,7 @@ reload_server() {
         echo "Rozpoczęto przeładowanei serwera (reload)."
         log "Rozpoczęto przeładowanei serwera (reload)."
 
-            $SCREEN_PATH -rd minecraft -X stuff "reload^M"
+            $SCREEN_PATH -rd $SCREEN_SESSION_NAME -X stuff "reload^M"
 
         echo "Zakończono przeładowanie serwera (reload)."
         log "Zakończono przeładowanie serwera (reload)."
@@ -538,7 +569,7 @@ connect_server() {
         echo "Połączono do konsoli."
         log "Połączono do konsoli."
 
-            $SCREEN_PATH -rd minecraft 
+            $SCREEN_PATH -rd $SCREEN_SESSION_NAME 
             
         echo "Rozłączono od konsoli."
         log "Rozłączono od konsoli."
@@ -579,7 +610,6 @@ eula_server() {
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-source version.txt
 check_update_script() {
 
     if $AUTO_UPDATE; then
@@ -634,6 +664,10 @@ check_update_script() {
     fi
 }
 
+script_debug(){
+    bash -x start.sh test
+}
+
 # Funkcja do uruchamiania ponownego całego systemu
 reboot-system_server() {
 
@@ -659,7 +693,6 @@ shutdown-system_server() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 # ██████  ██████  ███████ ██    ██  ██████   █████       █████  ██████   ██████  ██    ██ ███    ███ ███████ ███    ██ ████████ ██     ██ 
 #██    ██ ██   ██ ██      ██    ██ ██       ██   ██     ██   ██ ██   ██ ██       ██    ██ ████  ████ ██      ████   ██    ██    ██     ██ 
@@ -697,6 +730,7 @@ case "$1" in
      check)
         echo "Rozpoczęto sprawdzanie wymaganych zasobów."
         log "Rozpoczęto sprawdzanie wymaganych zasobów."
+            check_colors
             check_programs
             check_directories
             check_files
@@ -730,6 +764,9 @@ case "$1" in
         ;;
     update_script)
         check_update_script
+        ;;
+    script_debug)
+        script_debug
         ;;
     reboot_system)
         reboot-system_server
@@ -771,11 +808,12 @@ case "$1" in
             ${Yellow}reboot_system${NC} - Serwer minecraft zostanie wyłączony a potem zostanie uruchomiony ponownie cały system
             ${Yellow}shutdown_system${NC} - Serwer minecraft zostanie wyłączony a potem zostanie wyłączony cały system
             ${Yellow}update_script${NC} - 
+            ${Yellow}script_debug${NC} - 
             
         SystemD
             ${Yellow}start_default${NC} - 
 
-            "
+${BWhite}Aktualna wersja skryptu: $SCRIPT_VERSION${NC}"
         exit 1
         ;;
 

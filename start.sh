@@ -1,6 +1,8 @@
 #!/bin/bash
-
-source moduły/version.txt
+#------------------------------------
+# NIE ZMIENIAJ WERSJI! MOŻE TO POWODOWAĆ BŁĘDY PODCZAS AKTUALIZACJI SKRYPTU!
+SCRIPT_VERSION=$(<moduły/version.txt)
+#------------------------------------
 source moduły/data.sh
 source moduły/config.sh
 source moduły/colors.sh
@@ -73,6 +75,8 @@ check_programs() {
     echo
     check_program_existence "$WGET_PATH"
     echo
+    check_program_existence "$INXI_PATH"
+    echo
 }
 
 # Funkcja do sprawdzania istnienia katalogów
@@ -114,7 +118,6 @@ monitor_logs() {
       log "$SERVER_JAR nie jest uruchomiony."
       echo ------------------------------------------------------------------------
    fi
-echo -e ${BWhite}Aktualna wersja skryptu: $SCRIPT_VERSION${NC}
 }
 
 
@@ -278,22 +281,23 @@ find_all_minecraft_servers() {
 
 
 search_for_files() {
-    shift  # Usunięcie pierwszego argumentu (katalogu)
-    local extensions=("jar" "txt" "cfg")
-    local colors=("1;31" "32" "33")  # Kolory ANSI dla każdego formatu
+    #shift  # Usunięcie pierwszego argumentu (katalogu)
+    local extensions=(${FORMATS[@]})
+    local colors=("${FORMAT_COLORS[@]}")  # Kolory ANSI dla każdego formatu
 
     # Inicjalizacja tablicy do przechowywania pasujących plików
     local matching_files=()
 
     for ((i=0; i<${#extensions[@]}; i++)); do
         extension="${extensions[i]}"
-        color="${colors[i]}"
+        color="${colors[i]}"  # Pobierz odpowiedni kolor dla danego formatu
 
         # Logowanie informacji o rozpoczęciu przeszukiwania plików
         local log_message="Rozpoczęto przeszukiwanie .$extension w katalogu $SERVER_DIR."
         log "$log_message"
-
-        echo -e "\e[${color}mPliki .$extension w katalogu $SERVER_DIR:\e[0m"
+        
+        echo -------------------------------------------------------------------------------------------
+        echo -e "\e[${color}Pliki .$extension w katalogu $SERVER_DIR:\e[0m"
         local regex_pattern=".*/[^/]*\\.$extension"
         while IFS= read -r -d $'\0' file; do
             matching_files+=("$file")  # Dodaj pasujący plik do tablicy
@@ -324,9 +328,12 @@ search_for_files() {
     fi
 
     echo -------------------------------------------------------------------------------------------
-    echo "Mapa katalogu serwera Minecraft."
+
+    # Mapa katalogu serwera Minecraft.
     log "Mapa katalogu serwera Minecraft."
     $TREE_PATH $SERVER_DIR
+    echo -------------------------------------------------------------------------------------------
+
 
     # Logowanie informacji o zakończeniu przeszukiwania katalogu serwera Minecraft
     log "Zakończono przeszukiwanie katalogu serwera Minecraft."
@@ -614,11 +621,11 @@ check_update_script() {
 
     if $AUTO_UPDATE; then
 
-        new_version=$(wget -qO- https://raw.githubusercontent.com/PanRomekPL/minecraft-serwer-start.sh/main/version.txt)
+        new_version=$(wget -qO- https://raw.githubusercontent.com/PanRomekPL/minecraft-serwer-start.sh/main/moduły/version.txt)
         if [ "$SCRIPT_VERSION" \< "$new_version" ]; then
             echo " "
-            echo -e "Nowa wersja dostępna: ${Cyan}$new_version${NC}"
-            echo -e "Obecna wersja: ${Cyan}$SCRIPT_VERSION${NC}"
+            echo -e "Nowa wersja dostępna: ${BICyan}$new_version${NC}"
+            echo -e "Obecna wersja: ${BICyan}$SCRIPT_VERSION${NC}"
             echo " "
             update() {
                 echo -e "${On_IRed}!!!Obecna wersja skryptu zostanie usunięta w celu przeprowadzenia aktualizacji razem z wdrożonymi ustawieniami użytkownika.!!!${NC}"
@@ -633,6 +640,7 @@ check_update_script() {
                         echo Tworzenie kopii zapasowej skryptu startowego serwera Minecraft.
                         mkdir -p $SERVER_DIR/script_backup
                         cp -r $SERVER_DIR/*.sh $SERVER_DIR/script_backup/
+                        cp -r $SERVER_DIR/moduły $SERVER_DIR/script_backup/
                         echo " "
                         echo "Najnowsza wersja zostanie pobrana."
                         echo "Następnie należy uruchomić skrypt ponownie."
@@ -640,8 +648,10 @@ check_update_script() {
                         sleep 2
 
                         latest_release=$($WGET_PATH -qO- https://api.github.com/repos/PanRomekPL/minecraft-serwer-start.sh/releases/latest)
-                        download_link=$(echo "$latest_release" | grep browser_download_url | grep start.sh | cut -d '"' -f 4)
-                        $WGET_PATH "$download_link" -O start.sh
+                        download_link=$(echo "$latest_release" | grep browser_download_url | grep update.7z | cut -d '"' -f 4)
+                        $WGET_PATH "$download_link" -O update.7z
+
+                        cp -r $SERVER_DIR/script_backup/config.sh $SERVER_DIR/moduły/
 
                         echo "${BWhite}Aktualizacja skryptu została zakończona z sukcesem${NC}"
                         exit 0
@@ -690,6 +700,14 @@ shutdown-system_server() {
 
             sudo shutdown now
             
+}
+
+info_system_and_script(){
+    echo
+    inxi --full
+    echo
+    echo -e "Twórca \n \nŻródło"
+    echo -e ${BWhite}Aktualna wersja skryptu: $SCRIPT_VERSION${NC}
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -774,6 +792,9 @@ case "$1" in
     shutdown_system)
         shutdown-system_server
         ;;
+    info)
+        info_system_and_script
+        ;;
     start_default)
         start_default_server
         ;;
@@ -792,28 +813,28 @@ case "$1" in
             ${Yellow}reload${NC} - Przeładowanie serwera minecraft
             ${Yellow}connect${NC} - Połączenie do konsoli serwera minecraft
             ${Yellow}check${NC} - Sprawdzanie istnienia katalogów, plików i programów
-            ${Yellow}eula${NC} - 
-            ${Yellow}search_files${NC} - 
+            ${Yellow}eula${NC} - Ta funkcja jest odpowiedzialna za obsługę procesu akceptacji EULI w serwerze Minecraft
+            ${Yellow}search_files${NC} - Ma na celu przeszukanie określonego katalogu w celu poszukiwaniu plików o wybranych rozszerzeniach
             
         Tworzenie Kopi zapasowych i logów     
             ${Yellow}save_logs${NC} - Kopiowanie ostatniego dziennika zdarzeń do innego folderu 
             ${Yellow}backup_directory${NC} - Tworząca kopię zapasową całego katalogu serwera
 
         Usuwanei startch Kopi zapasowych i logów      
-            ${Yellow}cleanup_logs${NC} - 
+            ${Yellow}cleanup_logs${NC} - Ta funkcja odpowiada za usuwanie starych kopii logów niż 7 dni
             ${Yellow}backup_cleanup${NC} - Usuwanie starszych kopi niż 7 dni katalogu serwera
             ${Yellow}cleanup_backup_logs${NC} - Usuwanie starszych kopii niż 7 dni zapasowych dziennik zdarzeń
             
         System i skrypt
             ${Yellow}reboot_system${NC} - Serwer minecraft zostanie wyłączony a potem zostanie uruchomiony ponownie cały system
             ${Yellow}shutdown_system${NC} - Serwer minecraft zostanie wyłączony a potem zostanie wyłączony cały system
-            ${Yellow}update_script${NC} - 
-            ${Yellow}script_debug${NC} - 
+            ${Yellow}update_script${NC} - Funkcja odpowiedzialna za aktualizacje skryptu 
+            ${Yellow}script_debug${NC} - Funkcja odpowiedzialna za debugowanie skryptu
+            ${Yellow}info${NC} - Wyświetla informacje o systemie i skrypcie
             
         SystemD
-            ${Yellow}start_default${NC} - 
-
-${BWhite}Aktualna wersja skryptu: $SCRIPT_VERSION${NC}"
+            ${Yellow}start_default${NC} - Ta funkcja została stworzona dla możliwości uruchomienia serwera Minecraft z poziomu SystemD
+            "
         exit 1
         ;;
 

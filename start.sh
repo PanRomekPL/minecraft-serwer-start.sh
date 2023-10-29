@@ -473,13 +473,14 @@ start_server() {
         echo "Rozpoczęto uruchamianie serwera Minecraft."
         log "Rozpoczęto uruchamianie serwera Minecraft."
 
-
-           # cd "$SERVER_DIR"
-           # $SCREEN_PATH -dmS $SCREEN_SESSION_NAME -d -m $JAVA_PATH $JVM_OPTIONS -jar $SERVER_JAR nogui 2>&1 | tee -a "$LOG_FILE"
+    if $AUTO_CONNECT; then
 
             cd "$SERVER_DIR"
-            $SCREEN_PATH -S $SCREEN_SESSION_NAME -d -m $JAVA_PATH $JVM_OPTIONS -jar $SERVER_JAR nogui 2>&1 | tee -a "$LOG_FILE"
-
+            $SCREEN_PATH -S $SCREEN_SESSION_NAME -m $JAVA_PATH $JVM_OPTIONS -jar $SERVER_JAR nogui 2>&1 | tee -a "$LOG_FILE"
+    else
+            cd "$SERVER_DIR"
+            $SCREEN_PATH -dmS $SCREEN_SESSION_NAME -d -m $JAVA_PATH $JVM_OPTIONS -jar $SERVER_JAR nogui 2>&1 | tee -a "$LOG_FILE"
+    fi
 
 
     # Sprawdź, czy proces uruchamiania serwera faktycznie wystartował
@@ -554,6 +555,8 @@ restart_server() {
         log "Zakończono zatrzymanie serwera Minecraft."
 
             $SLEEP_PATH 10
+            auto_check_update_script
+            $SLEEP_PATH 10
             start_server
 }
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -624,7 +627,75 @@ eula_server() {
 
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-check_update_script() {
+manuall_check_update_script() {
+
+
+    new_version=$(wget -qO- https://raw.githubusercontent.com/PanRomekPL/minecraft-serwer-start.sh/main/moduły/version.txt)
+    if [ "$SCRIPT_VERSION" \< "$new_version" ]; then
+        echo " "
+        echo -e "Nowa wersja dostępna: ${BICyan}$new_version${NC}"
+        echo -e "Obecna wersja: ${BICyan}$SCRIPT_VERSION${NC}"
+        echo " "
+        update() {
+            echo -e "${On_IRed}!!!Obecna wersja skryptu zostanie usunięta w celu przeprowadzenia aktualizacji razem z wdrożonymi ustawieniami użytkownika.!!!${NC}"
+            echo ------------------------------------------------------------------------------------------------------------------------------
+            echo -e "${BWhite}Obecna wersja skryptu startowego zostanę skopiowana do katalogu „$SERVER_DIR/script_backup${NC}”"
+            echo ------------------------------------------------------------------------------------------------------------------------------
+            echo -e  "${BWhite}Czy chcesz zainstalować najnowszą wersję?${NC} (${Green}tak${NC}/${RED}nie${NC})"
+            read answer
+            answer=$(echo $answer | tr '[:upper:]' '[:lower:]')
+            case $answer in
+                "y"|"yes"|"t"|"tak")
+                    echo Tworzenie kopii zapasowej skryptu startowego serwera Minecraft.
+                    mkdir -p $SERVER_DIR/script_backup
+                    mkdir -p $SERVER_DIR/script_backup/last_backup
+                    mkdir $SERVER_DIR/script_backup/backup_$DATE2
+
+                    cp -r $SERVER_DIR/*.sh $SERVER_DIR/script_backup/last_backup
+                    cp -r $SERVER_DIR/*.sh $SERVER_DIR/script_backup/backup_$DATE2
+                    cp -r $SERVER_DIR/moduły $SERVER_DIR/script_backup/last_backup
+                    cp -r $SERVER_DIR/moduły $SERVER_DIR/script_backup/backup_$DATE2
+                    
+                    echo "Wersja skryptu: $SCRIPT_VERSION">> $SERVER_DIR/script_backup/backup_$DATE2/VERSION_SCRIPT
+
+                    echo " "
+                    echo "Najnowsza wersja zostanie pobrana."
+                    echo "Następnie należy uruchomić skrypt ponownie."
+                    echo -e "${BBlack}"
+                    sleep 2
+
+                    mkdir -p $SERVER_DIR/script_update_download
+                    latest_release=$($WGET_PATH -qO- https://api.github.com/repos/PanRomekPL/minecraft-serwer-start.sh/releases/latest)
+                    download_link=$(echo "$latest_release" | grep browser_download_url | grep update.zip | cut -d '"' -f 4)
+                    $WGET_PATH -P $SERVER_DIR/script_update_download "$download_link"
+                    $UNZIP_PATH -o $SERVER_DIR/script_update_download/update.zip -d $SERVER_DIR/
+                    cp -r $SERVER_DIR/script_backup/last_backup/moduły/config.sh $SERVER_DIR/moduły/
+
+                    rm -r $SERVER_DIR/script_update_download
+                    rm -r $SERVER_DIR/script_backup/last_backup
+
+                    echo -e "${BWhite}Aktualizacja skryptu została zakończona z sukcesem${NC}"
+                    exit 0
+                    ;;
+                "n"|"no"|"nie")
+                    echo " "
+                    echo -e "${On_IRed}Najnowsza wersja nie zostanie pobrana.${NC}"
+                    ;;
+                    *)
+                    echo
+                    echo -e "${On_IYellow}Nieznane polecenie!${NC}"
+                    echo
+                    update
+                    ;;
+            esac
+        }
+
+        update
+    fi
+
+}
+
+auto_check_update_script() {
 
     if $AUTO_UPDATE; then
 
@@ -634,53 +705,39 @@ check_update_script() {
             echo -e "Nowa wersja dostępna: ${BICyan}$new_version${NC}"
             echo -e "Obecna wersja: ${BICyan}$SCRIPT_VERSION${NC}"
             echo " "
-            update() {
-                echo -e "${On_IRed}!!!Obecna wersja skryptu zostanie usunięta w celu przeprowadzenia aktualizacji razem z wdrożonymi ustawieniami użytkownika.!!!${NC}"
-                echo ------------------------------------------------------------------------------------------------------------------------------
-                echo -e "${BWhite}Obecna wersja skryptu startowego zostanę skopiowana do katalogu „$SERVER_DIR/script_backup${NC}”"
-                echo ------------------------------------------------------------------------------------------------------------------------------
-                echo -e  "${BWhite}Czy chcesz zainstalować najnowszą wersję?${NC} (${Green}tak${NC}/${RED}nie${NC})"
-                read answer
-                answer=$(echo $answer | tr '[:upper:]' '[:lower:]')
-                case $answer in
-                    "y"|"yes"|"t"|"tak")
-                        echo Tworzenie kopii zapasowej skryptu startowego serwera Minecraft.
-                        mkdir -p $SERVER_DIR/script_backup
-                        cp -r $SERVER_DIR/*.sh $SERVER_DIR/script_backup/
-                        cp -r $SERVER_DIR/moduły $SERVER_DIR/script_backup/
-                        echo " "
-                        echo "Najnowsza wersja zostanie pobrana."
-                        echo "Następnie należy uruchomić skrypt ponownie."
-                        echo -e "${BBlack}"
-                        sleep 2
+            echo -e "${On_IRed}Automatyczna aktualizacja zostanie rozpoczęta. Obecna wersja zostanie zaktualizowana.${NC}"
+            echo " "
+            $SLEEP_PATH 10
+                    echo Tworzenie kopii zapasowej skryptu startowego serwera Minecraft.
+                    mkdir -p $SERVER_DIR/script_backup
+                    mkdir -p $SERVER_DIR/script_backup/last_backup
+                    mkdir $SERVER_DIR/script_backup/backup_$DATE2
 
-                        mkdir -p $SERVER_DIR/script_update_download
-                        latest_release=$($WGET_PATH -qO- https://api.github.com/repos/PanRomekPL/minecraft-serwer-start.sh/releases/latest)
-                        download_link=$(echo "$latest_release" | grep browser_download_url | grep update.7z | cut -d '"' -f 4)
-                        $WGET_PATH -P $SERVER_DIR/script_update_download "$download_link" -O update.zip
+                    cp -r $SERVER_DIR/*.sh $SERVER_DIR/script_backup/last_backup
+                    cp -r $SERVER_DIR/*.sh $SERVER_DIR/script_backup/backup_$DATE2
+                    cp -r $SERVER_DIR/moduły $SERVER_DIR/script_backup/last_backup
+                    cp -r $SERVER_DIR/moduły $SERVER_DIR/script_backup/backup_$DATE2
+                    
+                    echo "Wersja skryptu: $SCRIPT_VERSION">> $SERVER_DIR/script_backup/backup_$DATE2/VERSION_SCRIPT
 
-                        $UNZIP_PATH -o $SERVER_DIR/script_update_download -d $SERVER_DIR/
-                        cp -r $SERVER_DIR/script_backup/config.sh $SERVER_DIR/moduły/
+                    echo " "
+                    echo "Najnowsza wersja zostanie pobrana."
+                    echo "Następnie należy uruchomić skrypt ponownie."
+                    echo -e "${BBlack}"
+                    sleep 2
 
-                        rm -r $SERVER_DIR/script_update_download
+                    mkdir -p $SERVER_DIR/script_update_download
+                    latest_release=$($WGET_PATH -qO- https://api.github.com/repos/PanRomekPL/minecraft-serwer-start.sh/releases/latest)
+                    download_link=$(echo "$latest_release" | grep browser_download_url | grep update.zip | cut -d '"' -f 4)
+                    $WGET_PATH -P $SERVER_DIR/script_update_download "$download_link"
+                    $UNZIP_PATH -o $SERVER_DIR/script_update_download/update.zip -d $SERVER_DIR/
+                    cp -r $SERVER_DIR/script_backup/last_backup/moduły/config.sh $SERVER_DIR/moduły/
 
-                        echo "${BWhite}Aktualizacja skryptu została zakończona z sukcesem${NC}"
-                        exit 0
-                        ;;
-                    "n"|"no"|"nie")
-                        echo " "
-                        echo -e "${On_IRed}Najnowsza wersja nie zostanie pobrana.${NC}"
-                        ;;
-                        *)
-                        echo
-                        echo -e "${On_IYellow}Nieznane polecenie!${NC}"
-                        echo
-                        update
-                        ;;
-                esac
-            }
+                    rm -r $SERVER_DIR/script_update_download
+                    rm -r $SERVER_DIR/script_backup/last_backup
 
-            update
+                    echo -e "${BWhite}Aktualizacja skryptu została zakończona z sukcesem${NC}"
+                    exit 0
         fi
     fi
 }
@@ -734,6 +791,7 @@ info_system_and_script(){
 # Obsługa argumentów
 case "$1" in
     start)
+        auto_check_update_script
         start_server
         ;;
     stop)
@@ -792,7 +850,7 @@ case "$1" in
         cleanup_backup_logs
         ;;
     update_script)
-        check_update_script
+        manuall_check_update_script
         ;;
     script_debug)
         script_debug
@@ -839,7 +897,7 @@ case "$1" in
         System i skrypt
             ${Yellow}reboot_system${NC} - Serwer minecraft zostanie wyłączony a potem zostanie uruchomiony ponownie cały system
             ${Yellow}shutdown_system${NC} - Serwer minecraft zostanie wyłączony a potem zostanie wyłączony cały system
-            ${Yellow}update_script${NC} - Funkcja odpowiedzialna za aktualizacje skryptu 
+            ${Yellow}update_script${NC} - Funkcja odpowiedzialna za ręczną aktualizacje skryptu
             ${Yellow}script_debug${NC} - Funkcja odpowiedzialna za debugowanie skryptu
             ${Yellow}info${NC} - Wyświetla informacje o systemie i skrypcie
             
